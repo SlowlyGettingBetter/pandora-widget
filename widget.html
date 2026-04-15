@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Pandora Widget</title>
+<style>
+  /* ── Reset & Base ─────────────────────────────── */
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:          #0d0d0f;
+    --surface:     #161619;
+    --surface2:    #1e1e23;
+    --border:      #2a2a32;
+    --pandora-blue:#00a0ee;
+    --pandora-dark:#0077b3;
+    --text:        #e8e8f0;
+    --subtext:     #7a7a90;
+    --playing:     #00c875;
+    --btn-bg:      #1e1e26;
+    --btn-hover:   #28283a;
+    --btn-active:  #0d0d18;
+    --vol-track:   #2a2a38;
+    --vol-fill:    #00a0ee;
+    --radius:      10px;
+    --radius-sm:   6px;
+  }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 14px;
+    gap: 14px;
+  }
+
+  /* ── Header / Now Playing ─────────────────────── */
+  .now-playing {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 64px;
+  }
+
+  .np-icon {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, var(--pandora-dark), var(--pandora-blue));
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+  }
+
+  .np-text {
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .np-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .np-artist {
+    font-size: 11px;
+    color: var(--subtext);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .np-status {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+  .np-status.playing  { background: rgba(0,200,117,0.15); color: var(--playing); }
+  .np-status.paused   { background: rgba(0,160,238,0.15); color: var(--pandora-blue); }
+  .np-status.stopped  { background: rgba(122,122,144,0.15); color: var(--subtext); }
+
+  /* ── Transport Controls ───────────────────────── */
+  .controls {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .btn {
+    background: var(--btn-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s, border-color 0.12s, transform 0.08s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn:hover  { background: var(--btn-hover); border-color: #3a3a4a; }
+  .btn:active { background: var(--btn-active); transform: scale(0.93); }
+
+  .btn-sm  { width: 40px; height: 40px; font-size: 16px; }
+  .btn-md  { width: 52px; height: 52px; font-size: 22px; }
+  .btn-lg  { width: 60px; height: 60px; font-size: 26px; border-radius: var(--radius); }
+
+  /* Play/pause gets Pandora blue accent */
+  .btn-playpause {
+    background: linear-gradient(145deg, var(--pandora-dark), var(--pandora-blue));
+    border-color: var(--pandora-blue);
+    box-shadow: 0 0 16px rgba(0,160,238,0.25);
+  }
+  .btn-playpause:hover  { filter: brightness(1.12); }
+  .btn-playpause:active { filter: brightness(0.9); transform: scale(0.93); }
+
+  /* ── Volume Row ───────────────────────────────── */
+  .volume-row {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .vol-btn {
+    background: none;
+    border: none;
+    color: var(--subtext);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    transition: color 0.12s, background 0.12s;
+    flex-shrink: 0;
+  }
+  .vol-btn:hover  { color: var(--text); background: var(--btn-hover); }
+  .vol-btn:active { transform: scale(0.9); }
+
+  .vol-slider-wrap {
+    flex: 1;
+    position: relative;
+    height: 20px;
+    display: flex;
+    align-items: center;
+  }
+
+  .vol-track {
+    position: absolute;
+    width: 100%; height: 4px;
+    background: var(--vol-track);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .vol-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--pandora-dark), var(--pandora-blue));
+    border-radius: 2px;
+    transition: width 0.2s;
+  }
+
+  input[type=range] {
+    position: absolute;
+    width: 100%;
+    opacity: 0;
+    cursor: pointer;
+    height: 20px;
+    margin: 0;
+  }
+
+  .vol-label {
+    font-size: 11px;
+    color: var(--subtext);
+    min-width: 28px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* ── Mute button state ────────────────────────── */
+  .vol-btn.muted { color: #e55; }
+
+  /* ── Bottom row: extra quick actions ─────────────*/
+  .quick-row {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+  }
+
+  .quick-btn {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--subtext);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 8px 4px;
+    cursor: pointer;
+    text-align: center;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    letter-spacing: 0.03em;
+  }
+  .quick-btn:hover  { background: var(--btn-hover); color: var(--text); border-color: #3a3a4a; }
+  .quick-btn:active { background: var(--btn-active); transform: scale(0.96); }
+
+  /* ── Connection status dot ────────────────────── */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+    color: var(--subtext);
+    opacity: 0.6;
+  }
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--subtext);
+    flex-shrink: 0;
+  }
+  .dot.ok  { background: var(--playing); }
+  .dot.err { background: #e55; }
+
+  /* ── Pulse animation for playing ─────────────── */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.5; }
+  }
+  .playing-pulse { animation: pulse 2s ease-in-out infinite; }
+</style>
+</head>
+<body>
+
+<!-- Now Playing -->
+<div class="now-playing" id="nowPlayingCard">
+  <div class="np-icon" id="npIcon">🎵</div>
+  <div class="np-text">
+    <div class="np-title" id="npTitle">Connecting…</div>
+    <div class="np-artist" id="npArtist">Start Pandora to see track info</div>
+  </div>
+  <div class="np-status stopped" id="npStatus">—</div>
+</div>
+
+<!-- Transport Controls -->
+<div class="controls">
+  <button class="btn btn-sm" onclick="cmd('prev')"    title="Previous">⏮</button>
+  <button class="btn btn-md" onclick="cmd('stop')"    title="Stop">⏹</button>
+  <button class="btn btn-lg btn-playpause" id="btnPlayPause" onclick="cmd('playpause')" title="Play / Pause">▶</button>
+  <button class="btn btn-md" onclick="cmd('next')"    title="Next / Skip">⏭</button>
+</div>
+
+<!-- Volume -->
+<div class="volume-row">
+  <button class="vol-btn" id="muteBtn" onclick="cmd('mute')" title="Mute">🔊</button>
+  <div class="vol-slider-wrap">
+    <div class="vol-track"><div class="vol-fill" id="volFill" style="width:70%"></div></div>
+    <input type="range" id="volSlider" min="0" max="20" value="14"
+           oninput="onVolSlider(this.value)"
+           onchange="applyVolume(this.value)" />
+  </div>
+  <span class="vol-label" id="volLabel">70%</span>
+</div>
+
+<!-- Quick actions -->
+<div class="quick-row">
+  <button class="quick-btn" onclick="cmd('voldown5')">Vol −−</button>
+  <button class="quick-btn" onclick="cmd('mute')">Mute</button>
+  <button class="quick-btn" onclick="cmd('volup5')">Vol ++</button>
+</div>
+
+<!-- Status -->
+<div class="status-bar">
+  <div class="dot" id="connDot"></div>
+  <span id="connLabel">Connecting to server…</span>
+</div>
+
+<script>
+  const BASE = 'http://127.0.0.1:8765';
+  let lastVol = 14;      // slider steps (0-20)
+  let isMuted = false;
+  let serverOk = false;
+  let lastStatus = '';
+
+  // ── Send a command to the local server ──────────
+  async function cmd(action) {
+    try {
+      const r = await fetch(`${BASE}/${action}`, { mode: 'cors' });
+      if (!r.ok) throw new Error('bad response');
+      setConnected(true);
+      // Optimistic UI for play/pause
+      if (action === 'playpause') updatePlayPauseIcon();
+      if (action === 'mute') toggleMuteIcon();
+    } catch (e) {
+      setConnected(false);
+    }
+  }
+
+  // ── Volume slider (visual only while dragging) ──
+  function onVolSlider(val) {
+    const pct = Math.round((val / 20) * 100);
+    document.getElementById('volFill').style.width = pct + '%';
+    document.getElementById('volLabel').textContent = pct + '%';
+  }
+
+  // ── On release: fire vol up/down presses ─────────
+  async function applyVolume(val) {
+    const diff = parseInt(val) - lastVol;
+    if (diff === 0) return;
+    const action = diff > 0 ? 'volup' : 'voldown';
+    const presses = Math.abs(diff);
+    for (let i = 0; i < presses; i++) {
+      await cmd(action);
+      await sleep(30);
+    }
+    lastVol = parseInt(val);
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // ── Connection status UI ─────────────────────────
+  function setConnected(ok) {
+    serverOk = ok;
+    const dot   = document.getElementById('connDot');
+    const label = document.getElementById('connLabel');
+    dot.className   = 'dot ' + (ok ? 'ok' : 'err');
+    label.textContent = ok ? 'Server connected · ' + new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})
+                           : 'Server offline — is pandora_server.py running?';
+  }
+
+  // ── Mute icon toggle ────────────────────────────
+  function toggleMuteIcon() {
+    isMuted = !isMuted;
+    const btn = document.getElementById('muteBtn');
+    btn.textContent  = isMuted ? '🔇' : '🔊';
+    btn.className    = 'vol-btn' + (isMuted ? ' muted' : '');
+  }
+
+  // ── Play/Pause icon optimistic toggle ──────────
+  function updatePlayPauseIcon() {
+    const btn = document.getElementById('btnPlayPause');
+    // Will be corrected by next nowplaying poll
+    btn.textContent = btn.textContent === '▶' ? '⏸' : '▶';
+  }
+
+  // ── Now Playing polling ──────────────────────────
+  async function pollNowPlaying() {
+    try {
+      const r = await fetch(`${BASE}/nowplaying`, { mode: 'cors' });
+      if (!r.ok) throw new Error();
+      const data = await r.json();
+      setConnected(true);
+      updateNowPlaying(data);
+    } catch(e) {
+      setConnected(false);
+      updateNowPlaying({ title: 'Server offline', artist: 'Run start_pandora_widget.bat', status: 'Stopped' });
+    }
+  }
+
+  function updateNowPlaying(data) {
+    document.getElementById('npTitle').textContent  = data.title  || 'Nothing playing';
+    document.getElementById('npArtist').textContent = data.artist || '';
+
+    const statusEl  = document.getElementById('npStatus');
+    const ppBtn     = document.getElementById('btnPlayPause');
+    const icon      = document.getElementById('npIcon');
+    const s         = (data.status || '').toLowerCase();
+
+    statusEl.textContent = data.status || '—';
+    statusEl.className   = 'np-status ' + (
+      s.includes('play') ? 'playing' :
+      s.includes('paus') ? 'paused'  : 'stopped'
+    );
+
+    ppBtn.textContent = s.includes('play') ? '⏸' : '▶';
+
+    // Pulse icon when playing
+    icon.className = 'np-icon' + (s.includes('play') ? ' playing-pulse' : '');
+    if (s !== lastStatus) lastStatus = s;
+  }
+
+  // ── Start polling ────────────────────────────────
+  pollNowPlaying();
+  setInterval(pollNowPlaying, 5000);   // refresh every 5 seconds
+</script>
+</body>
+</html>
