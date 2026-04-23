@@ -6,69 +6,112 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Pandora Widget</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin:0; padding:0; box-sizing:border-box; }
   :root {
-    --bg:          #0a080f;
-    --surface:     rgba(22,18,30,0.75);
-    --border:      rgba(80,60,120,0.35);
-    --pandora-blue:#00a0ee;
-    --pandora-dark:#0077b3;
-    --text:        #e8e8f0;
-    --subtext:     #9a88bb;
-    --playing:     #00c875;
-    --btn-bg:      rgba(30,20,50,0.7);
-    --btn-hover:   rgba(60,40,100,0.8);
-    --btn-active:  rgba(15,10,30,0.9);
-    --vol-track:   rgba(60,40,100,0.4);
-    --radius:      12px;
-    --radius-sm:   8px;
+    --bg:#0a080f; --surface:rgba(22,18,30,0.80); --border:rgba(80,60,120,0.4);
+    --text:#e8e8f0; --subtext:#9a88bb; --playing:#00c875;
+    --btn-bg:rgba(30,20,50,0.75); --btn-hover:rgba(60,40,100,0.85);
+    --btn-active:rgba(15,10,30,0.95); --vol-track:rgba(60,40,100,0.4);
+    --radius:12px; --radius-sm:8px;
   }
-  html, body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:-apple-system,'Segoe UI',system-ui,sans-serif; overflow:hidden; user-select:none; position:relative; }
-  #blobCanvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; }
-  .ui-layer { position:relative; z-index:1; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14px; gap:12px; }
-  .now-playing { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:12px 16px; display:flex; align-items:center; gap:12px; min-height:64px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
-  .np-icon { width:40px; height:40px; border-radius:8px; background:linear-gradient(135deg,#4a1d8a,#7c3aed); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:18px; box-shadow:0 0 12px rgba(124,58,237,0.4); }
-  .np-text { flex:1; overflow:hidden; }
-  .np-title { font-size:13px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .np-artist { font-size:11px; color:var(--subtext); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .np-status { font-size:10px; padding:3px 8px; border-radius:20px; font-weight:600; letter-spacing:0.04em; flex-shrink:0; }
-  .np-status.playing { background:rgba(0,200,117,0.15); color:var(--playing); }
-  .np-status.paused  { background:rgba(124,58,237,0.2); color:#a78bfa; }
-  .np-status.stopped { background:rgba(122,122,144,0.15); color:var(--subtext); }
-  .controls { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; }
-  .btn { background:var(--btn-bg); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s,border-color 0.15s,transform 0.08s; -webkit-tap-highlight-color:transparent; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
-  .btn:hover  { background:var(--btn-hover); border-color:rgba(139,92,246,0.6); }
-  .btn:active { background:var(--btn-active); transform:scale(0.93); }
-  .btn-sm { width:44px; height:44px; font-size:17px; }
-  .btn-md { width:54px; height:54px; font-size:23px; }
-  .btn-lg { width:64px; height:64px; font-size:27px; border-radius:var(--radius); }
-  .btn-playpause { background:linear-gradient(145deg,#5b21b6,#7c3aed); border-color:rgba(139,92,246,0.7); box-shadow:0 0 24px rgba(124,58,237,0.45),0 0 8px rgba(124,58,237,0.3); }
-  .btn-playpause:hover  { filter:brightness(1.15); }
-  .btn-playpause:active { filter:brightness(0.88); transform:scale(0.93); }
-  .volume-row { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:10px 14px; display:flex; align-items:center; gap:10px; backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); }
-  .vol-btn { background:none; border:none; color:var(--subtext); cursor:pointer; font-size:16px; padding:4px; border-radius:4px; display:flex; align-items:center; justify-content:center; transition:color 0.12s,background 0.12s; flex-shrink:0; }
-  .vol-btn:hover  { color:var(--text); background:var(--btn-hover); }
-  .vol-btn:active { transform:scale(0.9); }
-  .vol-btn.muted  { color:#e55; }
-  .vol-slider-wrap { flex:1; position:relative; height:20px; display:flex; align-items:center; }
-  .vol-track { position:absolute; width:100%; height:4px; background:var(--vol-track); border-radius:2px; overflow:hidden; }
-  .vol-fill { height:100%; background:linear-gradient(90deg,#5b21b6,#7c3aed); border-radius:2px; transition:width 0.2s; }
-  input[type=range] { position:absolute; width:100%; opacity:0; cursor:pointer; height:20px; margin:0; }
-  .vol-label { font-size:11px; color:var(--subtext); min-width:28px; text-align:right; flex-shrink:0; }
-  .quick-row { width:100%; display:flex; gap:8px; }
-  .quick-btn { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--subtext); font-size:11px; font-weight:500; padding:8px 4px; cursor:pointer; text-align:center; transition:background 0.12s,color 0.12s,border-color 0.12s; letter-spacing:0.03em; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
-  .quick-btn:hover  { background:var(--btn-hover); color:var(--text); border-color:rgba(139,92,246,0.5); }
-  .quick-btn:active { background:var(--btn-active); transform:scale(0.96); }
-  .status-bar { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--subtext); opacity:0.6; }
-  .dot { width:6px; height:6px; border-radius:50%; background:var(--subtext); flex-shrink:0; }
-  .dot.ok  { background:var(--playing); }
-  .dot.err { background:#e55; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
-  .playing-pulse { animation:pulse 2s ease-in-out infinite; }
+  html,body { width:100%; height:100%; margin:0; overflow:hidden; user-select:none; background:#0a080f; font-family:-apple-system,'Segoe UI',system-ui,sans-serif; color:var(--text); }
+
+/* CSS blob fallback — always visible, no JS needed */
+.blob {
+position:fixed; border-radius:50%; filter:blur(45px);
+z-index:0; pointer-events:none;
+}
+.b1 { width:65vw; height:65vw; background:hsla(270,85%,35%,0.90); top:-15%; left:-15%; animation:drift1 8s ease-in-out infinite alternate; }
+.b2 { width:55vw; height:55vw; background:hsla(250,90%,38%,0.85); top:5%;   right:-10%; animation:drift2 6s ease-in-out infinite alternate; }
+.b3 { width:60vw; height:60vw; background:hsla(285,75%,28%,0.88); bottom:-10%; left:15%; animation:drift3 9s ease-in-out infinite alternate; }
+.b4 { width:45vw; height:45vw; background:hsla(220,85%,36%,0.80); bottom:5%;  right:5%;  animation:drift4 7s ease-in-out infinite alternate; }
+.b5 { width:40vw; height:40vw; background:hsla(300,75%,30%,0.75); top:35%;   left:30%;  animation:drift5 5s ease-in-out infinite alternate; }
+
+@keyframes drift1 {
+0%   { transform:translate(0,0) scale(1) rotate(0deg); }
+50%  { transform:translate(18%,14%) scale(1.18) rotate(15deg); }
+100% { transform:translate(8%,22%) scale(0.88) rotate(-10deg); }
+}
+@keyframes drift2 {
+0%   { transform:translate(0,0) scale(1) rotate(0deg); }
+50%  { transform:translate(-20%,12%) scale(1.22) rotate(-18deg); }
+100% { transform:translate(-10%,25%) scale(0.90) rotate(12deg); }
+}
+@keyframes drift3 {
+0%   { transform:translate(0,0) scale(1) rotate(0deg); }
+50%  { transform:translate(15%,-18%) scale(1.15) rotate(20deg); }
+100% { transform:translate(25%,-8%) scale(0.92) rotate(-15deg); }
+}
+@keyframes drift4 {
+0%   { transform:translate(0,0) scale(1) rotate(0deg); }
+50%  { transform:translate(-18%,-15%) scale(1.20) rotate(-22deg); }
+100% { transform:translate(-8%,-25%) scale(0.86) rotate(18deg); }
+}
+@keyframes drift5 {
+0%   { transform:translate(0,0) scale(1) rotate(0deg); }
+50%  { transform:translate(22%,-20%) scale(1.25) rotate(25deg); }
+100% { transform:translate(-15%,18%) scale(0.85) rotate(-20deg); }
+}
+
+#blobCanvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1; pointer-events:none; }
+
+.ui-layer { position:relative; z-index:2; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:14px; gap:12px; }
+.now-playing { width:100%; background:var(–surface); border:1px solid var(–border); border-radius:var(–radius); padding:12px 16px; display:flex; align-items:center; gap:12px; min-height:64px; backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); }
+.np-icon { width:40px; height:40px; border-radius:8px; background:linear-gradient(135deg,#4a1d8a,#7c3aed); display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:18px; box-shadow:0 0 14px rgba(124,58,237,0.5); }
+.np-text { flex:1; overflow:hidden; }
+.np-title { font-size:13px; font-weight:600; color:var(–text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.np-artist { font-size:11px; color:var(–subtext); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.np-status { font-size:10px; padding:3px 8px; border-radius:20px; font-weight:600; letter-spacing:0.04em; flex-shrink:0; }
+.np-status.playing { background:rgba(0,200,117,0.15); color:var(–playing); }
+.np-status.paused  { background:rgba(124,58,237,0.2); color:#a78bfa; }
+.np-status.stopped { background:rgba(122,122,144,0.15); color:var(–subtext); }
+.controls { width:100%; display:flex; align-items:center; justify-content:center; gap:10px; }
+.btn { background:var(–btn-bg); border:1px solid var(–border); border-radius:var(–radius-sm); color:var(–text); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s,transform 0.08s; -webkit-tap-highlight-color:transparent; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+.btn:hover  { background:var(–btn-hover); border-color:rgba(139,92,246,0.6); }
+.btn:active { background:var(–btn-active); transform:scale(0.93); }
+.btn-sm { width:44px; height:44px; font-size:17px; }
+.btn-md { width:54px; height:54px; font-size:23px; }
+.btn-lg { width:64px; height:64px; font-size:27px; border-radius:var(–radius); }
+.btn-playpause { background:linear-gradient(145deg,#5b21b6,#7c3aed); border-color:rgba(139,92,246,0.7); box-shadow:0 0 24px rgba(124,58,237,0.5),0 0 8px rgba(124,58,237,0.3); }
+.btn-playpause:hover  { filter:brightness(1.15); }
+.btn-playpause:active { filter:brightness(0.88); transform:scale(0.93); }
+.volume-row { width:100%; background:var(–surface); border:1px solid var(–border); border-radius:var(–radius); padding:10px 14px; display:flex; align-items:center; gap:10px; backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); }
+.vol-btn { background:none; border:none; color:var(–subtext); cursor:pointer; font-size:16px; padding:4px; border-radius:4px; display:flex; align-items:center; justify-content:center; transition:color 0.12s,background 0.12s; flex-shrink:0; }
+.vol-btn:hover  { color:var(–text); background:var(–btn-hover); }
+.vol-btn:active { transform:scale(0.9); }
+.vol-btn.muted  { color:#e55; }
+.vol-slider-wrap { flex:1; position:relative; height:20px; display:flex; align-items:center; }
+.vol-track { position:absolute; width:100%; height:4px; background:var(–vol-track); border-radius:2px; overflow:hidden; }
+.vol-fill { height:100%; background:linear-gradient(90deg,#5b21b6,#7c3aed); border-radius:2px; transition:width 0.2s; }
+input[type=range] { position:absolute; width:100%; opacity:0; cursor:pointer; height:20px; margin:0; }
+.vol-label { font-size:11px; color:var(–subtext); min-width:28px; text-align:right; flex-shrink:0; }
+.quick-row { width:100%; display:flex; gap:8px; }
+.quick-btn { flex:1; background:var(–surface); border:1px solid var(–border); border-radius:var(–radius-sm); color:var(–subtext); font-size:11px; font-weight:500; padding:8px 4px; cursor:pointer; text-align:center; transition:background 0.12s,color 0.12s; letter-spacing:0.03em; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+.quick-btn:hover  { background:var(–btn-hover); color:var(–text); }
+.quick-btn:active { background:var(–btn-active); transform:scale(0.96); }
+.status-bar { display:flex; align-items:center; gap:5px; font-size:10px; color:var(–subtext); opacity:0.6; }
+.dot { width:6px; height:6px; border-radius:50%; background:var(–subtext); flex-shrink:0; }
+.dot.ok  { background:var(–playing); }
+.dot.err { background:#e55; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+.playing-pulse { animation:pulse 2s ease-in-out infinite; }
 </style>
+
 </head>
 <body>
+
+<!-- CSS blobs — always visible as background -->
+
+<div class="blob b1"></div>
+<div class="blob b2"></div>
+<div class="blob b3"></div>
+<div class="blob b4"></div>
+<div class="blob b5"></div>
+
+<!-- Canvas for extra morphing detail (progressive enhancement) -->
+
 <canvas id="blobCanvas"></canvas>
+
 <div class="ui-layer">
   <div class="now-playing" id="nowPlayingCard">
     <div class="np-icon" id="npIcon">🎵</div>
@@ -102,144 +145,68 @@
     <span id="connLabel">Connecting to server…</span>
   </div>
 </div>
+
 <script>
-// ── BLOB ANIMATION ────────────────────────────────────────────
-const canvas = document.getElementById('blobCanvas');
-const ctx = canvas.getContext('2d');
-function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
-resize();
-window.addEventListener('resize', resize);
+const BASE='http://127.0.0.1:8765';
+let lastVol=14,isMuted=false,lastStatus='';
 
-class Blob {
-constructor(x, y, r, h, s, l, speed) {
-this.cx = x; this.cy = y; this.r = r;
-this.h = h; this.s = s; this.l = l;
-this.speed = speed;
-this.pts = 7;
-this.offsets = Array.from({length:this.pts}, () => Math.random() * Math.PI * 2);
-this.driftX = (Math.random()-0.5)*0.00025;
-this.driftY = (Math.random()-0.5)*0.00025;
+async function cmd(action){
+  try{
+    const r=await fetch(`${BASE}/${action}`,{mode:'cors'});
+    if(!r.ok)throw new Error();
+    setConnected(true);
+    if(action==='playpause')updatePlayPauseIcon();
+    if(action==='mute')toggleMuteIcon();
+  }catch(e){setConnected(false);}
 }
-draw(t) {
-const W = canvas.width, H = canvas.height;
-const cx = this.cx * W, cy = this.cy * H;
-const r  = this.r * Math.min(W, H);
-this.cx += this.driftX; this.cy += this.driftY;
-if (this.cx<0.08||this.cx>0.92) this.driftX*=-1;
-if (this.cy<0.08||this.cy>0.92) this.driftY*=-1;
-ctx.beginPath();
-const pts = [];
-for (let i=0; i<this.pts; i++) {
-const angle = (i/this.pts)*Math.PI*2;
-const wob   = 1 + 0.3*Math.sin(t*this.speed + this.offsets[i]);
-pts.push([cx+Math.cos(angle)*r*wob, cy+Math.sin(angle)*r*wob]);
+function onVolSlider(val){
+  const pct=Math.round((val/20)*100);
+  document.getElementById('volFill').style.width=pct+'%';
+  document.getElementById('volLabel').textContent=pct+'%';
 }
-ctx.moveTo((pts[0][0]+pts[this.pts-1][0])/2, (pts[0][1]+pts[this.pts-1][1])/2);
-for (let i=0; i<this.pts; i++) {
-const curr = pts[i], next = pts[(i+1)%this.pts];
-ctx.quadraticCurveTo(curr[0], curr[1], (curr[0]+next[0])/2, (curr[1]+next[1])/2);
+async function applyVolume(val){
+  const diff=parseInt(val)-lastVol; if(!diff)return;
+  const action=diff>0?'volup':'voldown',n=Math.abs(diff);
+  for(let i=0;i<n;i++){await cmd(action);await new Promise(r=>setTimeout(r,30));}
+  lastVol=parseInt(val);
 }
-ctx.closePath();
-const g = ctx.createRadialGradient(cx,cy,0,cx,cy,r*1.3);
-g.addColorStop(0,   `hsla(${this.h},${this.s}%,${this.l}%,0.85)`);
-g.addColorStop(0.5, `hsla(${this.h},${this.s}%,${this.l}%,0.45)`);
-g.addColorStop(1,   `hsla(${this.h},${this.s}%,${this.l}%,0)`);
-ctx.fillStyle = g;
-ctx.fill();
+function setConnected(ok){
+  document.getElementById('connDot').className='dot '+(ok?'ok':'err');
+  document.getElementById('connLabel').textContent=ok
+    ?'Server connected · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})
+    :'Server offline — is pandora_server.py running?';
 }
+function toggleMuteIcon(){
+  isMuted=!isMuted;
+  const b=document.getElementById('muteBtn');
+  b.textContent=isMuted?'🔇':'🔊';
+  b.className='vol-btn'+(isMuted?' muted':'');
 }
-
-const blobs = [
-new Blob(0.22, 0.28, 0.40, 270, 70, 28, 0.40),
-new Blob(0.75, 0.22, 0.34, 250, 80, 32, 0.33),
-new Blob(0.50, 0.68, 0.42, 285, 65, 22, 0.27),
-new Blob(0.12, 0.72, 0.30, 220, 75, 30, 0.48),
-new Blob(0.85, 0.75, 0.32, 300, 60, 24, 0.36),
-new Blob(0.62, 0.12, 0.26, 240, 80, 36, 0.44),
-];
-
-let t0 = null;
-function animate(ts) {
-if (!t0) t0 = ts;
-const t = (ts-t0)/1000;
-ctx.clearRect(0,0,canvas.width,canvas.height);
-ctx.fillStyle = ‘#0a080f’;
-ctx.fillRect(0,0,canvas.width,canvas.height);
-blobs.forEach(b => b.draw(t));
-requestAnimationFrame(animate);
+function updatePlayPauseIcon(){
+  const b=document.getElementById('btnPlayPause');
+  b.textContent=b.textContent==='▶'?'⏸':'▶';
 }
-requestAnimationFrame(animate);
-
-// ── WIDGET CONTROLS ───────────────────────────────────────────
-const BASE = ‘http://127.0.0.1:8765’;
-let lastVol=14, isMuted=false, serverOk=false, lastStatus=’’;
-
-async function cmd(action) {
-try {
-const r = await fetch(`${BASE}/${action}`,{mode:‘cors’});
-if (!r.ok) throw new Error();
-setConnected(true);
-if (action===‘playpause’) updatePlayPauseIcon();
-if (action===‘mute’) toggleMuteIcon();
-} catch(e) { setConnected(false); }
+async function pollNowPlaying(){
+  try{
+    const r=await fetch(`${BASE}/nowplaying`,{mode:'cors'});
+    if(!r.ok)throw new Error();
+    updateNowPlaying(await r.json());setConnected(true);
+  }catch(e){
+    setConnected(false);
+    updateNowPlaying({title:'Server offline',artist:'Run start_pandora_widget.bat',status:'Stopped'});
+  }
 }
-
-function onVolSlider(val) {
-const pct = Math.round((val/20)*100);
-document.getElementById(‘volFill’).style.width = pct+’%’;
-document.getElementById(‘volLabel’).textContent = pct+’%’;
+function updateNowPlaying(data){
+  document.getElementById('npTitle').textContent=data.title||'Nothing playing';
+  document.getElementById('npArtist').textContent=data.artist||'';
+  const el=document.getElementById('npStatus'),btn=document.getElementById('btnPlayPause');
+  const icon=document.getElementById('npIcon'),s=(data.status||'').toLowerCase();
+  el.textContent=data.status||'—';
+  el.className='np-status '+(s.includes('play')?'playing':s.includes('paus')?'paused':'stopped');
+  btn.textContent=s.includes('play')?'⏸':'▶';
+  icon.className='np-icon'+(s.includes('play')?' playing-pulse':'');
+  lastStatus=s;
 }
-
-async function applyVolume(val) {
-const diff=parseInt(val)-lastVol; if (!diff) return;
-const action=diff>0?‘volup’:‘voldown’, n=Math.abs(diff);
-for (let i=0;i<n;i++){await cmd(action);await new Promise(r=>setTimeout(r,30));}
-lastVol=parseInt(val);
-}
-
-function setConnected(ok) {
-serverOk=ok;
-document.getElementById(‘connDot’).className=’dot ’+(ok?‘ok’:‘err’);
-document.getElementById(‘connLabel’).textContent=ok
-?’Server connected · ’+new Date().toLocaleTimeString([],{hour:‘2-digit’,minute:‘2-digit’})
-:‘Server offline — is pandora_server.py running?’;
-}
-
-function toggleMuteIcon() {
-isMuted=!isMuted;
-const b=document.getElementById(‘muteBtn’);
-b.textContent=isMuted?‘🔇’:‘🔊’;
-b.className=‘vol-btn’+(isMuted?’ muted’:’’);
-}
-
-function updatePlayPauseIcon() {
-const b=document.getElementById(‘btnPlayPause’);
-b.textContent=b.textContent===‘▶’?‘⏸’:‘▶’;
-}
-
-async function pollNowPlaying() {
-try {
-const r=await fetch(`${BASE}/nowplaying`,{mode:‘cors’});
-if(!r.ok) throw new Error();
-updateNowPlaying(await r.json()); setConnected(true);
-} catch(e) {
-setConnected(false);
-updateNowPlaying({title:‘Server offline’,artist:‘Run start_pandora_widget.bat’,status:‘Stopped’});
-}
-}
-
-function updateNowPlaying(data) {
-document.getElementById(‘npTitle’).textContent  = data.title||‘Nothing playing’;
-document.getElementById(‘npArtist’).textContent = data.artist||’’;
-const el=document.getElementById(‘npStatus’), btn=document.getElementById(‘btnPlayPause’);
-const icon=document.getElementById(‘npIcon’), s=(data.status||’’).toLowerCase();
-el.textContent=data.status||’—’;
-el.className=‘np-status ‘+(s.includes(‘play’)?‘playing’:s.includes(‘paus’)?‘paused’:‘stopped’);
-btn.textContent=s.includes(‘play’)?‘⏸’:‘▶’;
-icon.className=‘np-icon’+(s.includes(‘play’)?’ playing-pulse’:’’);
-lastStatus=s;
-}
-
 pollNowPlaying();
 setInterval(pollNowPlaying,5000);
 </script>
