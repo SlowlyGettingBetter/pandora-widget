@@ -10,7 +10,7 @@
   :root {
     --bg:#0a080f; --surface:rgba(22,18,30,0.4); --border:rgba(80,60,120,0.4);
     --text:#e8e8f0; --subtext:#9a88bb; --playing:#00c875;
-    --btn-bg:rgba(22,18,30,0.4); --btn-hover:rgba(60,40,100,0.85);
+    --btn-bg:rgba(20,10,40,0.45); --btn-hover:rgba(60,40,100,0.85);
     --btn-active:rgba(15,10,30,0.95); --vol-track:rgba(60,40,100,0.4);
     --radius:12px; --radius-sm:8px;
   }
@@ -66,7 +66,7 @@ z-index:0; pointer-events:none;
 .np-status.paused  { background:rgba(124,58,237,0.2); color:#a78bfa; }
 .np-status.stopped { background:rgba(122,122,144,0.15); color:var(–subtext); }
 .controls { width:100%; background:var(–surface); border:1px solid var(–border); border-radius:var(–radius); padding:10px 14px; display:flex; justify-content:center; gap:10px; backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); }
-.btn { background:var(–surface); border:1px solid var(–border); border-radius:var(–radius-sm); color:var(–text); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s,transform 0.08s; -webkit-tap-highlight-color:transparent; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+.btn { background:var(–btn-bg); border:1px solid var(–border); border-radius:var(–radius-sm); color:var(–text); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s,transform 0.08s; -webkit-tap-highlight-color:transparent; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
 .btn:hover  { background:var(–btn-hover); border-color:rgba(139,92,246,0.6); }
 .btn:active { background:var(–btn-active); transform:scale(0.93); }
 .btn-sm { width:44px; height:44px; font-size:17px; }
